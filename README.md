@@ -56,6 +56,8 @@ A dual-mode data engineering solution deployed on **Microsoft Azure**. This arch
 |                 (Bronze Layer Container)                              |
 +-----------------------------------------------------------------------+
 
+---
+
 ## 2. Pipeline Architecture Overview
 
 ### Real-Time Streaming Pipeline
