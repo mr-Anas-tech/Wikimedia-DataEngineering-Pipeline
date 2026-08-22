@@ -52,4 +52,4 @@ jobs:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
-          databricks workspace import-dir . /Shared/pyspark_pipeline -o
+          databricks workspace import-dir . /Shared/pyspark_pipeline --overwrite
