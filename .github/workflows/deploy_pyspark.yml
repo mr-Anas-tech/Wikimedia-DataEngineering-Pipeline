@@ -1,0 +1,56 @@
+name: PySpark Databricks CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # ----------------------------------------------------
+  # Stage 1: Continuous Integration (Linting & Unit Testing)
+  # ----------------------------------------------------
+  continuous-integration:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python Environment
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pyspark databricks-cli
+
+      - name: Run PySpark Unit Tests
+        run: |
+          pytest tests/
+
+  # ----------------------------------------------------
+  # Stage 2: Continuous Deployment (Deploy to Databricks)
+  # ----------------------------------------------------
+  continuous-deployment:
+    needs: continuous-integration
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Databricks CLI
+        uses: databricks/setup-cli@v0.2.0
+
+      - name: Deploy PySpark Scripts to Databricks Workspace
+        env:
+          DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          databricks workspace import_dir ./src /Shared/pyspark_pipeline --overwrite
