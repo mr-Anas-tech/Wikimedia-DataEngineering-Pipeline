@@ -89,6 +89,12 @@ adl_wikipedia (ADLS Gen2 Container: bronze)
 
 # VIDEO: 
 
+
+
+https://github.com/user-attachments/assets/a9c937c4-2219-4611-8065-79e056959f8f
+
+
+
 ## 🔄 Azure Databricks Data Ingestion & Processing Architecture
 
 This phase handles the secure ingestion, structural transformation, and optimized storage of both real-time streaming edits and historical pageview batch data using **Azure Databricks** and **PySpark**.
