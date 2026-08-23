@@ -142,3 +142,35 @@ This phase handles the secure ingestion, structural transformation, and optimize
 https://github.com/user-attachments/assets/1ad46aa3-0bfe-4c9e-b325-efd7c141c10a
 
 
+## 🚀 Automated CI/CD Deployment Pipeline (`deploy_pyspark.yml`)
+
+This project implements an enterprise-grade Continuous Integration and Continuous Deployment (CI/CD) pipeline using **GitHub Actions** and the **Databricks CLI**. It automates code validation, dependency installation, testing, and workspace synchronization to guarantee reliable, zero-downtime deployments.
+
+---
+
+### 🛠️ Stage 1: Continuous Integration (Linting & Unit Testing)
+* **Why it matters:** Manually pushing code directly to production workspace folders can introduce syntax errors, broken dependencies, or untested PySpark logic. Automated CI acts as a quality gate, verifying every pull request and push to `main`.
+* **How it works:**
+  * **Event Triggers:** Automatically fires on every `push` or `pull_request` targeting the `main` branch.
+  * **Environment Provisioning:** Spins up an isolated `ubuntu-latest` runner equipped with Python 3.10.
+  * **Dependency Installation:** Automatically upgrades `pip` and installs essential pipeline tools including `pytest`, `pyspark`, and `databricks-cli`.
+  * **Automated Testing Gate:** Runs unit tests across PySpark modules to validate schema definitions and transformation logic before allowing code to advance to deployment.
+
+---
+
+### 🚀 Stage 2: Continuous Deployment (Deploy to Databricks)
+* **Why it matters:** Automating code sync to Databricks eliminates manual file uploads, prevents human error, and ensures the production cluster always runs the exact commit present in the primary Git repository.
+* **How it works:**
+  * **Conditional Execution:** Executes strictly after Stage 1 completes successfully and only when code is merged directly into `refs/heads/main`.
+  * **Databricks CLI Setup:** Initializes the official `databricks/setup-cli@main` action on the runner.
+  * **Secure Authentication:** Connects to the target workspace using repository secrets (`DATABRICKS_HOST` and `DATABRICKS_TOKEN`), keeping credentials encrypted and completely hidden from build logs.
+  * **Workspace Synchronization:** Executes `databricks workspace import-dir . /Shared/pyspark_pipeline --overwrite` to push all validated PySpark scripts directly into the shared Databricks workspace folder, updating downstream workflow jobs in real time.
+ 
+ # CI/CD Video:
+
+ 
+
+https://github.com/user-attachments/assets/c66e4a42-6968-4f75-88a2-3d1e8a867507
+
+
+
