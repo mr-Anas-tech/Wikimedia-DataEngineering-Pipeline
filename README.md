@@ -83,4 +83,47 @@ adl_wikipedia (ADLS Gen2 Container: bronze)
         ├── 2026/06/
         │   └── pageviews_data.json
         └── 2026/07/
-            └── pageviews_data.json
+            └── pageviews_data.json.
+
+```
+
+# VIDEO: 
+
+## 🔄 Azure Databricks Data Ingestion & Processing Architecture
+
+This phase handles the secure ingestion, structural transformation, and optimized storage of both real-time streaming edits and historical pageview batch data using **Azure Databricks** and **PySpark**.
+
+---
+
+### 🛡️ Enterprise Security & Secrets Management
+* **Why it matters:** Hardcoding sensitive cloud connection keys directly in notebooks poses a severe security risk and violates enterprise compliance standards.
+* **How it works:** Access keys for Azure Data Lake Storage (ADLS Gen2) are stored within an encrypted Databricks Secret Scope (`dbutils.secrets.get(scope="wikimedia", key="Access-key")`). This guarantees that authentication tokens remain completely hidden from logs, visual outputs, and version control while maintaining seamless cloud authorization.
+
+---
+
+### 🌊 Real-Time Edit Stream Ingestion (`Stream_processing_pyspark`)
+* **Why it matters:** Wikimedia's live edit feeds emit continuously as raw binary Avro/JSON event streams containing nested metadata. This raw format must be sanitized and flattened before analysts or analytical engines can use it.
+* **How it works:**
+  * **Data Lake Reading:** Databricks recursively reads raw event logs stored in binary format directly from the ADLS Gen2 `bronze` container.
+  * **Schema Extraction & Decoding:** Converts raw binary payloads into human-readable strings, dynamically infers the nested JSON structure, and unpacks the embedded change details.
+  * **Field Normalization:** Filters out noise and extracts critical attributes—including `sequence_number`, `enqueued_time`, `id`, `timestamp`, `title`, `bot`, `user`, `type`, and `wiki`.
+  * **Parquet Optimization:** Writes the clean dataset as partitioned **Parquet** files into the staging area. Parquet provides columnar compression, drastically reducing storage costs and accelerating query execution in Snowflake.
+
+---
+
+### 📦 Historical Pageview Batch Ingestion (`Batch_processing_pyspark`)
+* **Why it matters:** Wikimedia pageviews are delivered as massive, deeply nested JSON objects containing multi-layered arrays (projects, monthly view totals, daily details, and top-ranked articles). SQL warehouses struggle with nested arrays, leading to slow queries and complex joins.
+* **How it works:**
+  * **Multi-Line JSON Ingestion:** Reads large multi-line JSON files representing historical pageview metrics from the data lake.
+  * **Array Unnesting (Explode):** Utilizes PySpark's array explosion functions (`explode_outer` and `explode`) to flatten nested lists into individual database rows without losing parent-child relationships.
+  * **Attribute Extraction:** Unpacks structured fields into clear relational columns: `project`, `access`, `year`, `month`, `day`, `article`, `views`, and `rank`.
+  * **Storage Delivery:** Saves the fully flattened, schema-aligned dataset into Parquet format in the ADLS Gen2 staging zone for direct downstream consumption.
+
+---
+
+### ⏱️ Automated Pipeline Scheduling & Reliability
+* **Why it matters:** Data pipelines require consistent automated execution to keep downstream reports fresh while managing cloud compute costs efficiently.
+* **How it works:**
+  * **Databricks Workflows:** The transformation tasks are orchestrated through a dedicated Databricks Job pipeline (`Stream_processing_pyspark`).
+  * **12-Hour Schedule:** Configured to run automatically every 12 hours. This cadence balances real-time metric updates with optimal cluster resource consumption, preventing idle compute billing.
+  * **Run Monitoring & Alerts:** Monitors total job duration (averaging ~6 minutes per run) and captures execution metrics to ensure continuous health and immediate failure visibility.
