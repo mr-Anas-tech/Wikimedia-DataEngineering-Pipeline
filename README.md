@@ -133,3 +133,12 @@ This phase handles the secure ingestion, structural transformation, and optimize
   * **Databricks Workflows:** The transformation tasks are orchestrated through a dedicated Databricks Job pipeline (`Stream_processing_pyspark`).
   * **12-Hour Schedule:** Configured to run automatically every 12 hours. This cadence balances real-time metric updates with optimal cluster resource consumption, preventing idle compute billing.
   * **Run Monitoring & Alerts:** Monitors total job duration (averaging ~6 minutes per run) and captures execution metrics to ensure continuous health and immediate failure visibility.
+
+
+#  VIDEO Pyspark:
+
+
+
+https://github.com/user-attachments/assets/1ad46aa3-0bfe-4c9e-b325-efd7c141c10a
+
+
