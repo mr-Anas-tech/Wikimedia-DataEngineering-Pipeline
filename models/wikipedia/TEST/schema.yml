@@ -1,0 +1,78 @@
+version: 2
+
+models:
+  - name: fct_artical_daily_metrics
+    description: "Daily aggregated metrics combining batch pageviews and live streaming edits per article."
+    columns:
+      - name: article_daily_key
+        description: "Surrogate primary key generated using MD5 hash of article title and metric date."
+        data_tests:
+          - unique:
+              config:
+                severity: warn
+          - not_null:
+              config:
+                severity: warn
+
+      - name: article_title
+        description: "Cleaned title of the Wikipedia article."
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+
+      - name: metric_date
+        description: "The calendar date for which metrics are aggregated."
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+
+      - name: total_edits
+        description: "Total live streaming edits recorded on the given day."
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+
+      - name: total_page_views
+        description: "Total batch pageviews recorded for the article on the given day."
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+
+  - name: dim_editors
+    description: "Dimension table capturing distinct user and bot editing behavior across Wikimedia events."
+    columns:
+      - name: username
+        description: "Unique username or temporary IP identifier of the editor."
+        data_tests:
+          - unique:
+              config:
+                severity: warn
+          - not_null:
+              config:
+                severity: warn
+
+      - name: is_bot
+        description: "Boolean flag indicating whether the editor is an automated bot."
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
+          - accepted_values:
+              config:
+                severity: warn
+              arguments:
+                values: [true, false]
+
+      - name: distinct_articles_edited
+        description: "Total count of unique articles modified by this editor."
+
+      - name: total_edits_performed
+        description: "Cumulative count of edit actions performed by this user."
+        data_tests:
+          - not_null:
+              config:
+                severity: warn
