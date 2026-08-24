@@ -1,0 +1,7 @@
+sources:
+  - name: raw_source
+    database: WIKIMEDIA_DB
+    schema: public
+    tables:
+      - name: WIKIMEDIA_STREAM_DATA
+      - name: WIKIMEDIA_BATCH_DATA
