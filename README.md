@@ -285,7 +285,24 @@ Snowflake Horizon Catalog Integration
  * Accuracy & Uniqueness: Monitors NULL COUNT and tracks DUPLICATE COUNT metrics on surrogate identifiers (EVENT_ID, SEQUENCE_NUMBER).
  * Volume & Freshness Monitoring: Automated row count trends and execution monitoring within physical target schemas (WIKIMEDIA_DB.PUBLIC).
 🔧 Troubleshooting: Snowflake Warehouse Execution Errors
-.
+
+# DBT PROCESS VIDEO:
+
+https://github.com/user-attachments/assets/1390c5ff-58a9-40b8-984e-2be3a5a54b92
+
+
+
+# DBT DEPLOY CI/CD:
+
+https://github.com/user-attachments/assets/2bf4e020-146f-482e-9912-252aae99b2f6
+
+
+
+
+
+
+
+
 
 
 
