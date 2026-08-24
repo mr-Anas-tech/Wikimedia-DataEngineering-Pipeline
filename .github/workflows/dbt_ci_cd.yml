@@ -31,6 +31,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install dbt-snowflake
 
+      - name: Create dbt Profiles Directory & File
+        run: |
+          mkdir -p ~/.dbt
+          cat <<EOF > ~/.dbt/profiles.yml
+          wikimedia_dbt:
+            target: dev
+            outputs:
+              dev:
+                type: snowflake
+                account: "$DBT_ENV_SECRET_ACCOUNT"
+                user: "$DBT_ENV_SECRET_USER"
+                password: "$DBT_ENV_SECRET_PASSWORD"
+                role: "$DBT_ENV_SECRET_ROLE"
+                warehouse: "$DBT_ENV_SECRET_WAREHOUSE"
+                database: WIKIMEDIA_DB
+                schema: PUBLIC
+                threads: 4
+                client_session_keep_alive: False
+          EOF
+
       - name: Install dbt Dependencies
         run: dbt deps
 
