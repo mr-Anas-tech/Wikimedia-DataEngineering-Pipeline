@@ -35,7 +35,7 @@ jobs:
         run: |
           mkdir -p ~/.dbt
           cat <<EOF > ~/.dbt/profiles.yml
-          wikimedia_dbt:
+          default:
             target: dev
             outputs:
               dev:
