@@ -172,5 +172,124 @@ This project implements an enterprise-grade Continuous Integration and Continuou
 
 https://github.com/user-attachments/assets/c66e4a42-6968-4f75-88a2-3d1e8a867507
 
+## ❄️ Snowflake Data Lakehouse Architecture & Ingestion Strategy
+
+### 💡 Architectural Decisions: WHY Snowflake & External Stages?
+To process Wikimedia's batch metric logs alongside real-time streaming data, Snowflake serves as the central Enterprise Data Warehouse. Instead of directly ingesting unorganized data into managed internal storage—which inflates storage overhead—the pipeline leverages **Storage Integrations** and **External Stages** connected directly to Azure Data Lake Storage Gen2 (ADLS Gen2) Bronze containers.
+
+* **Separation of Compute & Storage:** Raw Parquet files remain stored cost-effectively inside ADLS Gen2. Snowflake compute (`COMPUTE_WH`) is strictly isolated and only spins up when executing transformations or running automated load schedules.
+* **Schema-on-Read Optimization:** Incoming raw files are structured in binary Parquet format containing nested JSON/Variant payloads. Using Schema-on-Read pathing (`$1:column_name::DATATYPE`), raw payloads are dynamically extracted and explicitly cast into strongly typed SQL columns without needing intermediate staging tables.
+
+---
+
+### 🛠️ Core Infrastructure Breakdown & Explanations
+
+#### 1. Cloud-Native Storage Integration (`azure_adls_snowflake_int`)
+* **Why it's configured:** Establishes a permanent, secure IAM trust relationship between Azure Tenant and Snowflake. 
+* **Engineering Impact:** Restricts Snowflake's access scope strictly to authorized Blob container paths (`azure://flightstacc.blob.core.windows.net/bronze/`), preventing unauthorized data surface access.
+
+#### 2. External Stages (`adls_batch_stage` & `adls_api_stage`)
+* **Why it's configured:** Creates pointer references inside Snowflake targeting exact Azure folder paths for both batch and stream datasets using a centralized `PARQUET` file format.
+* **Engineering Impact:** Standardizes data parsing rules across heterogeneous input channels (Batch analytics vs. Streaming event metrics) while keeping storage references modular.
+
+#### 3. Schema-on-Read Ingestion & Column Casting
+* **Why it's configured:** Direct parsing of `$1` (Variant object) allows extraction of explicit fields such as `project`, `views`, `rank`, and temporal metrics (`year`, `month`, `day`) directly from staged files.
+* **Engineering Impact:** Eliminates heavy pre-processing scripts prior to data lake ingestion, reducing pipeline runtime and latency.
+
+#### 4. Automated Task Scheduling (`wikimedia_stream_task`)
+* **Why it's configured:** A native Snowflake Task executes a scheduled `COPY INTO` query every 720 minutes to incrementally append incoming micro-batch/streaming files into production tables.
+* **Engineering Impact:** Automates the ingestion lifecycle without requiring external orchestrators for simple polling, maintaining high data freshness with zero manual intervention.
+
+# video_snowflake:
+
+https://github.com/user-attachments/assets/7a9ab0dd-ac45-403e-89d5-1ef3b2835245
+
+
+# 🚀 Wikimedia Data Engineering Pipeline DBT with Snowflake 
+
+A production-grade Analytics Engineering pipeline transforming raw Wikimedia streaming and batch data into enterprise-grade dimensional models using **dbt**, **Snowflake**, and **GitHub Actions CI/CD**.
+
+---
+
+## 🏗️ Architecture & Processing Design
+
+This pipeline follows the **Kappa Architecture** & **Medallion  Architecture** design pattern to seamlessly unify high-velocity real-time event streams with historical batch data into a single queryable analytics engine.
+
+```text
+  [ Real-Time Stream: Wikimedia SSE ] ──► Kafka / Event Hubs ──► Snowflake Stream Table ┐
+                                                                                         ├──► [ UNION ALL Strategy ] ──► Intermediate Engine ──► Analytics Marts
+  [ Batch Data: Daily Pageviews ] ─────► ADLS / Databricks ────► Snowflake Batch Table  ┘
+```
+💡 Why Hybrid UNION ALL Strategy?
+ * Unified Analytics Engine: Eliminates siloed data storage by standardizing real-time edit telemetry and historical page view counts into a single source of truth (int_wikimedia_events).
+ * High-Performance Deduplication: Combines stream and batch events using standard surrogate keys (md5(concat(...))) and applies ROW_NUMBER() OVER (PARTITION BY surrogate_key ORDER BY event_timestamp DESC) to guarantee exact-once semantics without heavy database locks.
+ * Optimized Cost Efficiency: Prevents expensive full-table scans by filtering and materializing streaming/batch splits upfront before dimensional aggregation.
+
+
+```text
+
+📁 Repository Structure
+Wikimedia-DataEngineering-Pipeline/
+├── .github/
+│   └── workflows/
+│       ├── dbt_ci_cd.yml          # GitHub Actions CI/CD Pipeline
+│       └── deploy_pyspark.yml
+├── models/
+│   └── wikipedia/
+│       ├── INTERMEDIATES/
+│       │   └── int_wikimedia_events.sql
+│       ├── marts/
+│       │   ├── dim_editors.sql
+│       │   ├── fct_artical_daily_metrics.sql
+│       │   └── fct_hourly_traffic_spikes.sql
+│       ├── TEST/
+│       │   └── schema.yml         # Data quality tests & column descriptions
+│       ├── source.yml
+│       ├── stg_wikimedia_batch.sql
+│       └── stg_wikimedia_streaming.sql
+├── profiles.yml
+├── dbt_project.yml
+└── target/
+```
+
+```text
+
+🔗 Data Lineage & Directed Acyclic Graph (DAG)
+[ raw_source.WIKIMEDIA_STREAM_DATA ] ──► [ stg_wikimedia_streaming ] ──┐
+                                                                      ├──► [ int_wikimedia_events ] ──┬──► [ dim_editors ]
+[ raw_source.WIKIMEDIA_BATCH_DATA  ] ──► [ stg_wikimedia_batch     ] ──┘                              ├──► [ fct_artical_daily_metrics ] (BI Dashboard)
+                                                                                                      └──► [ fct_hourly_traffic_spikes ] (Streamlit App)
+```
+
+🛠️ Data Transformation Layers & Marts
+1. Staging & Intermediate Layer (stg_, int_)
+ * stg_wikimedia_streaming & stg_wikimedia_batch: Cleans raw JSON payloads, casts timestamp fields (to_timestamp), handles missing values, and standardizes column mappings.
+ * int_wikimedia_events: Merges batch and streaming CTEs using UNION ALL and applies surrogate key deduplication to maintain unique records.
+2. Analytics Marts (marts/)
+ * dim_editors: Dimension table categorizing editor metrics (identifying bots vs. human editors, total contributions, and active timestamps).
+ * fct_hourly_traffic_spikes (Streamlit App Integration): High-frequency hourly aggregations capturing live traffic fluctuations, rapid edit spikes, and active contributor counts in real time.
+ * fct_artical_daily_metrics (BI Dashboards Integration): Aggregated daily key metrics including total edits, unique editors, bot vs. human edit ratios, and cumulative article pageviews.
+⚙️ Automated CI/CD & dbt Orchestration
+Integrated with GitHub Actions for Automated Testing and Continuous Delivery (CI/CD), as well as dbt Cloud Orchestration for scheduled execution.
+GitHub Actions Pipeline (.github/workflows/dbt_ci_cd.yml)
+Automated verification triggers on every Pull Request or push to main:
+ * Environment Provisioning: Dynamically sets up Python 3.10 and installs dbt-snowflake.
+ * Profile Generation: Constructs profiles.yml dynamically utilizing encrypted GitHub Secrets (DBT_ENV_SECRET_*).
+ * Automated Verification: Runs dbt deps, dbt debug, and executes models/tests via dbt build.
+🛡️ Data Quality Testing & Monitoring
+dbt Schema Assertions (schema.yml)
+ * unique & not_null: Enforced across primary identifiers like username.
+ * accepted_values: Categorical validation for boolean flags (is_bot: [true, false]).
+ * Non-Blocking Alert Thresholds: Configured with severity: warn parameters to log alerts during CI test runs without blocking streaming ingestion.
+Snowflake Horizon Catalog Integration
+ * Accuracy & Uniqueness: Monitors NULL COUNT and tracks DUPLICATE COUNT metrics on surrogate identifiers (EVENT_ID, SEQUENCE_NUMBER).
+ * Volume & Freshness Monitoring: Automated row count trends and execution monitoring within physical target schemas (WIKIMEDIA_DB.PUBLIC).
+🔧 Troubleshooting: Snowflake Warehouse Execution Errors
+.
+
+
+
+
+
 
 
