@@ -299,6 +299,127 @@ https://github.com/user-attachments/assets/2bf4e020-146f-482e-9912-252aae99b2f6
 
 
 
+# 📊 Wikimedia Hourly Traffic Analysis (Live Operational App)
+
+An interactive, real-time web application built to monitor hourly traffic trends, track editor behavior, and detect automated system activity on Wikipedia articles.
+
+---
+
+## 🎯 What Does This App Do?
+
+Imagine Wikipedia as a massive digital library visited by millions of people every second. While executive management looks at daily or monthly summaries, **operational teams need live, hourly updates** to answer critical questions:
+
+1. **Traffic Spikes:** Which articles are getting sudden bursts of traffic right now?
+2. **System Health:** Is the surge driven by real human readers or automated computer scripts (bots)?
+3. **Real-time Monitoring:** How does hourly activity compare across different language editions of Wikipedia?
+
+This Streamlit application acts as a **live control room dashboard**, allowing users to filter, inspect, and analyze high-resolution hourly data dynamically.
+
+---
+
+## 💡 Key Features & Business Value
+
+* **Hourly Granularity:** Unlike standard daily reports, this app tracks traffic changes hour-by-hour to capture exact surge times.
+* **Human vs. Bot Filtering:** Easily isolate human reader activity from automated bot traffic to maintain clean operational analytics.
+* **Dynamic Article Search:** Instantly look up specific Wikipedia pages to trace their traffic trajectory.
+* **Interactive Visualizations:** Clean charts and metrics cards designed for fast, intuitive decision-making.
+
+
+* **Data Storage:** Data is structured and queried directly from Snowflake.
+* **Data Transformation:** Cleaned and aggregated using **dbt (data build tool)**.
+* **Web Frontend:** Built with **Python & Streamlit** for lightning-fast interactive reporting.
+
+---
+
+## 🛠️ Built With
+
+* **Language:** Python
+* **Web Framework:** Streamlit
+* **Data Processing:** Pandas / PySpark
+* **Data Warehouse:** Snowflake / Google BigQuery
+* **Data Transformation:** dbt (data build tool)
+### Repository:
+https://github.com/mr-Anas-tech/wikimedia-pipeline-dashboard.git
+
+
+# 📈 Wikipedia Daily Traffic & Editor Analytics (Power BI Dashboard)
+
+An executive-level Power BI reporting solution designed to track platform readership trends, monitor contributor productivity, and analyze automated bot activity across Wikipedia articles.
+
+---
+
+## 🎯 Project Overview
+
+Managing a global open-access platform requires balancing content consumption with platform maintenance. This multi-page Power BI dashboard serves as the central command center for executive leadership and community moderators:
+
+* **Executive View:** Tracks overall readership growth, traffic spikes, and the operational footprint of automated bots vs. human editors.
+* **Editor Behavior View:** Analyzes contributor activity patterns, pinpoints high-impact power editors, and evaluates workload distribution across articles.
+
+---
+
+## 🔑 Key Features & Dashboards
+
+### 1. Executive Traffic & Content Overview (Page 1)
+* **KPI Header Cards:** Real-time visibility into Total Page Views (**1.78B**), Total Edits (**7.71M**), Unique Editors (**4.18M**), and the Bot Edits Ratio (**40.17%**).
+* **Traffic vs. Edits Trend:** Dual-axis line and column chart pinpointing critical mid-year traffic surges (June–July).
+* **Content Distribution:** Highlights top-performing articles by page views (`Main_Page` dominance).
+* **Bot vs. Human Workload:** Donut visual breaking down the proportion of bot-generated modifications (**3.10M**) versus human edits (**4.62M**).
+
+### 2. Editor Behavior & Bot Impact Analysis (Page 2)
+* **Registered Community Metrics:** High-level metrics showing **92K+ Total Editors** performing **1.97M edits** at an average rate of **21.45 articles per editor**.
+* **Impact Analysis (Scatter Plot):** Identifies outlier accounts by correlating total edits performed against the number of distinct articles modified.
+* **Top Contributor Leaderboard:** Ranks top active community members (e.g., `Debessis`, `HedgeHog`) by total contribution volume.
+* **Account Distribution:** Segments automated bot accounts (**2,291**) from the broader registered user base.
+
+---
+
+## 📊 Key Executive Insights
+
+1. **Volume & Traffic Spikes:** Page views spiked past **800M+** during June and July, correlating directly with an influx of editing activity.
+2. **Automated Efficiency:** While bot accounts represent a small fraction of registered profiles (**2,291 accounts**), they drive **40.17% of all platform edits**, executing high-frequency maintenance tasks.
+3. **Power-User Reliance:** A small percentage of top editors account for a disproportionately large share of manual content maintenance.
+
+
+## 👨‍💻 Author & Acknowledgments
+
+* **Developer:** Muhammad Anas
+* **Role:** Analytics Engineering & Full Stack Data Engineer 
+
+* 
+
+STREAMLIT_APP Link:
+
+https://wikimedia-pipeline-dashboard-4quy7aavmnwzpvdoh9ivgx.streamlit.app/
+
+
+App & Power Bi Video: 
+
+
+
+https://github.com/user-attachments/assets/5fc8e9d2-d932-4f7a-9bac-7a46d69c130a
+
+
+
+
+
+pics:
+<img width="1907" height="827" alt="Screenshot 2026-08-31 175634" src="https://github.com/user-attachments/assets/65ef8816-57a8-48e3-8b74-c926c06bfef1" />
+
+<img width="1887" height="890" alt="Screenshot 2026-08-31 175608" src="https://github.com/user-attachments/assets/2ec4ad41-a046-49da-9c9b-fbcedc20cb39" />
+
+<img width="1488" height="722" alt="Screenshot 2026-08-31 173442" src="https://github.com/user-attachments/assets/35f186e1-56ad-4a42-b3b4-3a893f6e4b90" />
+
+<img width="1502" height="722" alt="Screenshot 2026-08-31 173332" src="https://github.com/user-attachments/assets/0a679109-4a47-4d23-8018-4e44c7bdef61" />
+
+
+
+
+
+
+
+
+
+
 
 
 
