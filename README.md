@@ -1,30 +1,71 @@
-# Wikipedia Real-Time Streaming & Historical Batch Processing Architecture
+# Wikimedia End-to-End Real-Time & Batch Data Lakehouse Platform
+An enterprise-grade, hybrid data engineering solution built on Microsoft Azure, Databricks, Snowflake, dbt, Streamlit, and Power BI. This platform unifies continuous live Wikimedia event feeds with historical batch analytics into a single queryable Lakehouse architecture.
+###  📌 Executive Overview & Problem Statement
+Wikipedia is one of the most visited platforms in the world. However, analyzing its massive ecosystem presents two major technical challenges:
+ * High-Velocity Live Activity: Millions of edits happen continuously. Security and moderation teams need real-time alerts to detect bot activity, vandalism, and live edit spikes instantly.
+ * Heavy Historical Analytics: Executive management needs long-term historical pageview trends to plan infrastructure capacity and track global readership growth.
+### 💡 The Solution
+This platform solves both challenges using a Hybrid Medallion & Kappa Architecture:
+ * Real-time streaming ingests continuous live edit events via Azure Event Hubs for immediate alerting.
+ * Scheduled batch processing pulls historical pageview metrics via Azure Data Factory into an Azure Data Lake Storage Gen2 (ADLS Gen2) Bronze layer.
+ * PySpark in Databricks cleans, unpacks, and normalizes raw JSON/Binary events into optimized Parquet files.
+ * Snowflake & dbt unify both data streams using a robust UNION ALL deduplication strategy into curated data marts.
+ * Streamlit & Power BI deliver operational real-time monitoring and executive-level analytics dashboards.
 
-A dual-mode data engineering solution deployed on **Microsoft Azure**. This architecture captures **live Wikimedia edit events** in real time for immediate alerting while simultaneously ingesting **historical pageview metrics** via scheduled batch pipelines into an Azure Data Lake Storage Gen2 bronze layer.
+## End to End system Architecture & Data Flow:
 
----
+```text
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │                                     1. SOURCE & INGESTION LAYER                                        │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+    [ Live Wikimedia SSE Stream ]  ──► [ Flask Producer (App Service) ] ──► [ Azure Event Hubs ]
+                                                                                  │ (Real-time Edits)
+    [ Wikimedia REST API ]         ──► [ Azure Data Factory (ADF) ]     ──► [ ADLS Gen2 Bronze ]
+                                                                                  │ (Historical Pageviews)
+                                                                                  ▼
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │                                   2. TRANSFORMATION & PROCESSING LAYER                                 │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                                        [ Azure Databricks (PySpark) ]
+                                                                        ├── Decodes Raw JSON/Avro
+                                                                        ├── Unnesting & Explode
+                                                                        └── Writes Partitioned Parquet
+                                                                                  │
+                                                                                  ▼
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │                                    3. STORAGE & ANALYTICS WAREHOUSE                                    │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                                        [ Snowflake Data Warehouse ]
+                                                                        ├── External Stages & Storage Int.
+                                                                        └── Scheduled Copy Tasks
+                                                                                  │
+                                                                                  ▼
+                                                                        [ dbt Analytics Engineering ]
+                                                                        ├── Staging (stg_)
+                                                                        ├── Intermediate Union (int_)
+                                                                        └── Data Marts (marts/)
+                                                                                  │
+                                                                        ┌─────────┴─────────┐
+                                                                        ▼                   ▼
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │                                     4. CONSUMPTION & REPORTING LAYER                                   │
+  └────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                         [ Streamlit App ]         [ Power BI Dashboard ]
+                                                        (Hourly Operational)       (Executive Insights)
+```
 
-## 1. System Architecture Overview
+## Step-by-Step Data Movement (How Data Travels)
+| Processing Stage | Source Component | Target Component | Data Format & Transformation Applied |
+|---|---|---|---|
+| 1. Stream Ingestion | Wikimedia SSE Feed | Azure Event Hubs | Raw JSON/Base64 continuous HTTP stream buffered into 20-item micro-batches. |
+| 2. Batch Ingestion | Wikimedia REST API | ADLS Gen2 (Bronze) | Parameterized HTTP requests writing raw monthly .json files. |
+| 3. Compute & Staging | ADLS Gen2 Bronze | ADLS Gen2 Staging | Databricks PySpark reads raw files, unpacks arrays (explode), and saves compressed .parquet files. |
+| 4. Cloud Warehouse | ADLS Gen2 Staging | Snowflake Raw Tables | External Stage reads Parquet; Schema-on-Read casts dynamic JSON into strongly typed SQL columns. |
+| 5. Analytics Modeling | Snowflake Raw | dbt Data Marts | UNION ALL merges stream & batch feeds; applies surrogate key (MD5) deduplication into dim_editors & fct_ tables. |
+| 6. Business Layer | dbt Data Marts | Streamlit & Power BI | Direct SQL connections driving real-time hourly spike charts and executive KPI visuals. |
 
-### Real-Time Streaming Pipeline
 
-| Step | Service / Component | Config Details | Core Function |
-| :--- | :--- | :--- | :--- |
-| **1. Source** | **Wikimedia SSE Stream** | `stream.wikimedia.org/v1/events` | Continuous live event publishing for Wikipedia edits. |
-| **2. Producer** | **Azure App Service (Flask)** | Python Application | Consumes SSE events & creates 20-item micro-batches. |
-| **3. Ingestion**| **Azure Event Hubs** | Hub: `wikipedia-live-stream` | High-throughput stream ingestion queue. |
-| **4. Processing**| **Azure Logic Apps** | Consumer Group: `$Default` | Parses Base64 JSON & applies filters (`bot`, `wiki`). |
-| **5. Action** | **Alerting Engine** | Email / Teams Alerts | Triggers immediate real-time notifications. |
 
-### Historical Batch Ingestion Pipeline
-
-| Step | Service / Component | Config Details | Core Function |
-| :--- | :--- | :--- | :--- |
-| **1. Source** | **Wikimedia REST API** | `api/rest_v1/metrics/pageviews` | Provides aggregate monthly article pageview data. |
-| **2. Pipeline** | **Azure Data Factory (ADF)** | Pipeline: `pl-wikipedia_batch_ingest` | Dynamic ingestion driven by parameterized `ForEach` loop. |
-| **3. Target Sink**| **Azure Data Lake Storage Gen2** | Container: `bronze` | Persists historical JSON files in raw landing folder. |
-
----
 
 ## 2. Pipeline Architecture Details
 
